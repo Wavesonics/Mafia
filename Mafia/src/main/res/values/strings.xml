@@ -1,0 +1,13 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+
+    <string name="app_name">Mafia</string>
+    <string name="title_activity_main_menu">MainMenuActivity</string>
+
+    <string name="action_settings">Settings</string>
+
+    <string name="INTRO_sign_in_warning">You must sign in to continue</string>
+
+    <string name="MAINMENU_start_or_join">Start or join a game</string>
+
+</resources>

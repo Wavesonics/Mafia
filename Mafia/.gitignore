@@ -1,0 +1,7 @@
+/bin/
+/build/
+/gen/
+*.iml
+*.keystore
+local.properties
+gradle.properties
