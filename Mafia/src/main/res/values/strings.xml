@@ -2,7 +2,8 @@
 <resources>
 
     <string name="app_name">Mafia</string>
-    <string name="title_activity_main_menu">MainMenuActivity</string>
+
+    <string name="title_activity_main_menu">Main Menu</string>
 
     <string name="action_settings">Settings</string>
 

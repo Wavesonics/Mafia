@@ -14,8 +14,12 @@ public class IntroActivity extends BaseGameActivity {
 	@Override
 	public void onCreate(Bundle savedInstanceState) {
 		// set requested clients (games and cloud save)
-		setRequestedClients(BaseGameActivity.CLIENT_GAMES |
-		                    BaseGameActivity.CLIENT_APPSTATE);
+		setRequestedClients(BaseGameActivity.CLIENT_GAMES);
+
+		// enable debug log, if applicable
+		if (BuildConfig.DEBUG) {
+			enableDebugLog(true, "MyActivity");
+		}
 
 		super.onCreate(savedInstanceState);
 
