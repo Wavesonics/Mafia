@@ -3,23 +3,21 @@ package com.darkrockstudios.apps.mafia;
 import android.app.Activity;
 import android.app.Fragment;
 
+import com.darkrockstudios.apps.mafia.game.GameController;
+
 /**
  * Created by Adam on 4/27/2014.
  */
 public class BaseGameFragment extends Fragment
 {
-	private GameController m_gameController;
+	protected GameController m_gameController;
 
 	@Override
 	public void onAttach( final Activity activity )
 	{
 		super.onAttach( activity );
 
-		if( activity instanceof GameControllerProvider )
-		{
-			GameControllerProvider provider = (GameControllerProvider) activity;
-			m_gameController = provider.getGameController();
-		}
+		m_gameController = GameController.get( getFragmentManager() );
 	}
 
 	@Override

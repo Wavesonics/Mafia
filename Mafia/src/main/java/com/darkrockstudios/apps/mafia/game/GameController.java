@@ -1,4 +1,4 @@
-package com.darkrockstudios.apps.mafia;
+package com.darkrockstudios.apps.mafia.game;
 
 import android.app.Activity;
 import android.app.Fragment;
@@ -8,6 +8,12 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.WindowManager;
 
+import com.darkrockstudios.apps.mafia.GameFragment;
+import com.darkrockstudios.apps.mafia.IntroActivity;
+import com.darkrockstudios.apps.mafia.InvitationsFragment;
+import com.darkrockstudios.apps.mafia.LoadingFragment;
+import com.darkrockstudios.apps.mafia.MainActivity;
+import com.darkrockstudios.apps.mafia.R;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.GamesActivityResultCodes;
@@ -15,8 +21,10 @@ import com.google.android.gms.games.GamesStatusCodes;
 import com.google.android.gms.games.multiplayer.Invitation;
 import com.google.android.gms.games.multiplayer.Multiplayer;
 import com.google.android.gms.games.multiplayer.OnInvitationReceivedListener;
+import com.google.android.gms.games.multiplayer.Participant;
 import com.google.android.gms.games.multiplayer.realtime.RealTimeMessage;
 import com.google.android.gms.games.multiplayer.realtime.RealTimeMessageReceivedListener;
+import com.google.android.gms.games.multiplayer.realtime.RealTimeMultiplayer;
 import com.google.android.gms.games.multiplayer.realtime.Room;
 import com.google.android.gms.games.multiplayer.realtime.RoomConfig;
 import com.google.android.gms.games.multiplayer.realtime.RoomStatusUpdateListener;
@@ -29,7 +37,7 @@ import java.util.List;
 /**
  * Created by Adam on 4/26/2014.
  */
-public class GameController extends Fragment implements OnInvitationReceivedListener, RoomUpdateListener, RoomStatusUpdateListener, RealTimeMessageReceivedListener, GameHelper.GameHelperListener
+public class GameController extends Fragment implements OnInvitationReceivedListener, RoomUpdateListener, RoomStatusUpdateListener, RealTimeMessageReceivedListener, GameHelper.GameHelperListener, RealTimeMultiplayer.ReliableMessageSentCallback
 {
 	private static final String FRAGTAG             = GameController.class.getName() + ".GAMECONTROLLER";
 	private final static String FRAGTAG_INVITATIONS = MainActivity.class.getPackage() + ".INVITATIONS";
@@ -49,6 +57,10 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	private GameHelper m_gameHelper;
 
 	private Room m_room;
+
+	private ClientType m_clientType;
+	private World      m_world;
+	private String     m_localPlayerId;
 
 	public static GameController get( final FragmentManager fragmentManager )
 	{
@@ -101,10 +113,10 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		setRetainInstance( true );
 
 		m_gameHelper = new GameHelper( m_activity, GameHelper.CLIENT_GAMES );
-		m_gameHelper.setup( this );  //'this' => GameHelperListener
+		m_gameHelper.setup( this );
 
-		//m_gameHelper.setSigningInMessage(mSigningInMessage);
-		//m_gameHelper.setSigningOutMessage(mSigningOutMessage);
+		m_world = new World();
+
 		m_gameHelper.onStart( m_activity );
 
 		gotoInvitationsScreen();
@@ -138,6 +150,34 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 			// prevent screen from sleeping during handshake
 			m_activity.getWindow().addFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
 
+			setClientType( ClientType.MASTER );
+
+			// go to loading screen while we wait for the proper callback
+			gotoLoadingScreen();
+		}
+		if( requestCode == GameController.RC_INVITATION_INBOX )
+		{
+			if( responseCode != Activity.RESULT_OK )
+			{
+				// canceled
+				return;
+			}
+
+			// get the selected invitation
+			Bundle extras = data.getExtras();
+			Invitation invitation = extras.getParcelable( Multiplayer.EXTRA_INVITATION );
+
+			// accept it!
+			RoomConfig roomConfig = makeBasicRoomConfigBuilder()
+					                        .setInvitationIdToAccept( invitation.getInvitationId() )
+					                        .build();
+			Games.RealTimeMultiplayer.join( getApiClient(), roomConfig );
+
+			// prevent screen from sleeping during handshake
+			m_activity.getWindow().addFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
+
+			setClientType( ClientType.SLAVE );
+
 			// go to loading screen while we wait for the proper callback
 			gotoLoadingScreen();
 		}
@@ -166,30 +206,6 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 				m_activity.getWindow().clearFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
 			}
 		}
-		if( requestCode == GameController.RC_INVITATION_INBOX )
-		{
-			if( responseCode != Activity.RESULT_OK )
-			{
-				// canceled
-				return;
-			}
-
-			// get the selected invitation
-			Bundle extras = data.getExtras();
-			Invitation invitation = extras.getParcelable( Multiplayer.EXTRA_INVITATION );
-
-			// accept it!
-			RoomConfig roomConfig = makeBasicRoomConfigBuilder()
-					                        .setInvitationIdToAccept( invitation.getInvitationId() )
-					                        .build();
-			Games.RealTimeMultiplayer.join( getApiClient(), roomConfig );
-
-			// prevent screen from sleeping during handshake
-			m_activity.getWindow().addFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
-
-			// go to loading screen while we wait for the proper callback
-			gotoLoadingScreen();
-		}
 	}
 
 	// create a RoomConfigBuilder that's appropriate for your implementation
@@ -200,9 +216,25 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		                 .setRoomStatusUpdateListener( this );
 	}
 
+	public ClientType geClientType()
+	{
+		return m_clientType;
+	}
+
+	public void setClientType( final ClientType clientType )
+	{
+		m_clientType = clientType;
+	}
+
+	public World getWorld()
+	{
+		return m_world;
+	}
+
 	public void setRoom( final Room room )
 	{
 		m_room = room;
+		m_localPlayerId = Games.Players.getCurrentPlayerId( getApiClient() );
 	}
 
 	public Room getRoom()
@@ -259,10 +291,29 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		m_activity.getFragmentManager().beginTransaction().replace( R.id.container, fragment, FRAGTAG_GAME ).commit();
 	}
 
-	@Override
-	public void onRealTimeMessageReceived( final RealTimeMessage realTimeMessage )
+	public void completeSetup()
 	{
+		byte[] b = new byte[ 1 ];
+		b[ 0 ] = (byte) World.State.Pregame.ordinal();
 
+		broadcastMessage( b );
+		m_world.setState( World.State.Pregame );
+	}
+
+	private void broadcastMessage( final byte[] message )
+	{
+		final String localParticipantId = m_room.getParticipantId( m_localPlayerId );
+		for( final Participant p : m_room.getParticipants() )
+		{
+			if( !p.getParticipantId().equals( localParticipantId ) )
+			{
+				Games.RealTimeMultiplayer.sendReliableMessage( getApiClient(),
+				                                               this,
+				                                               message,
+				                                               m_room.getRoomId(),
+				                                               p.getParticipantId() );
+			}
+		}
 	}
 
 	@Override
@@ -421,6 +472,19 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 
 	@Override
 	public void onSignInSucceeded()
+	{
+
+	}
+
+	@Override
+	public void onRealTimeMessageReceived( final RealTimeMessage realTimeMessage )
+	{
+		byte[] message = realTimeMessage.getMessageData();
+		m_world.setState( World.State.values()[ message[ 0 ] ] );
+	}
+
+	@Override
+	public void onRealTimeMessageSent( final int statusCode, final int tokenId, final String recipientParticipantId )
 	{
 
 	}

@@ -1,17 +1,25 @@
 package com.darkrockstudios.apps.mafia;
 
 import android.app.Activity;
+import android.app.AlertDialog;
+import android.app.Dialog;
+import android.content.DialogInterface;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.widget.Toast;
+
+import com.darkrockstudios.apps.mafia.game.GameController;
 
 import butterknife.ButterKnife;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
 
-public class MainActivity extends Activity implements GameSetupHandler, GameControllerProvider
+public class MainActivity extends Activity implements GameSetupHandler, DialogInterface.OnClickListener
 {
 	private GameController m_gameController;
+
+	private Dialog m_confirmExit;
 
 	@Override
 	protected void onCreate( final Bundle savedInstanceState )
@@ -21,6 +29,18 @@ public class MainActivity extends Activity implements GameSetupHandler, GameCont
 		ButterKnife.inject( this );
 
 		m_gameController = GameController.get( getFragmentManager() );
+	}
+
+	@Override
+	protected void onPause()
+	{
+		super.onPause();
+
+		if( m_confirmExit != null )
+		{
+			m_confirmExit.dismiss();
+			m_confirmExit = null;
+		}
 	}
 
 	@Override
@@ -39,6 +59,28 @@ public class MainActivity extends Activity implements GameSetupHandler, GameCont
 			return true;
 		}
 		return super.onOptionsItemSelected( item );
+	}
+
+	@Override
+	public void onBackPressed()
+	{
+		if( m_gameController != null && m_gameController.getRoom() != null )
+		{
+			AlertDialog.Builder builder = new AlertDialog.Builder( this );
+
+			builder.setTitle( "Leave Game?" );
+			builder.setMessage( "You will not be able to rejoin this game!" );
+			builder.setPositiveButton( "Leave", this );
+			builder.setNegativeButton( "Stay", this );
+			builder.setCancelable( false );
+
+			m_confirmExit = builder.create();
+			m_confirmExit.show();
+		}
+		else
+		{
+			super.onBackPressed();
+		}
 	}
 
 	public void displayError( final int messageResource )
@@ -89,8 +131,14 @@ public class MainActivity extends Activity implements GameSetupHandler, GameCont
 	}
 
 	@Override
-	public GameController getGameController()
+	public void onClick( final DialogInterface dialog, final int which )
 	{
-		return m_gameController;
+		m_confirmExit = null;
+
+		if( which == Dialog.BUTTON_POSITIVE )
+		{
+			Toast.makeText( this, "Leaving game...", Toast.LENGTH_LONG ).show();
+			finish();
+		}
 	}
 }
