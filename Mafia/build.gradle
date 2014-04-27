@@ -3,18 +3,16 @@ apply plugin: 'android'
 
 dependencies {
     compile fileTree(dir: 'libs', include: ['*.jar'])
-
     compile project(':BaseGameUtils')
     compile 'com.google.android.gms:play-services:4.3.+'
     compile 'com.android.support:appcompat-v7:19.+'
-
     compile 'com.jakewharton:butterknife:5.0.0'
 }
 
 
 android {
     compileSdkVersion 19
-    buildToolsVersion "19.0.3"
+    buildToolsVersion '19.0.3'
 
     defaultConfig {
         minSdkVersion 14
@@ -41,12 +39,12 @@ android {
         release {
             debuggable false
             zipAlign true
-            //runProguard false
-            //proguardFiles getDefaultProguardFile('proguard-android.txt'), 'proguard-rules.txt'
+            runProguard false
         }
         debug {
             debuggable true
             zipAlign false
+            runProguard false
         }
     }
 
@@ -60,6 +58,8 @@ android {
         android.signingConfigs.release.storePassword = storePassword
         android.signingConfigs.release.keyAlias = keyAlias
         android.signingConfigs.release.keyPassword = keyPassword
+
+        buildTypes.release.signingConfig = android.signingConfigs.release
     } else {
         println 'gradle.properties not well formed'
         if (!project.hasProperty('storeFile')) println 'storeFile not defined'
