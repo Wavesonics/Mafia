@@ -1,14 +1,14 @@
 package com.darkrockstudios.apps.mafia;
 
 import android.app.Activity;
-import android.app.Fragment;
+import android.app.DialogFragment;
 
 import com.darkrockstudios.apps.mafia.game.GameController;
 
 /**
  * Created by Adam on 4/27/2014.
  */
-public class BaseGameFragment extends Fragment
+public class BaseGameFragment extends DialogFragment
 {
 	protected GameController m_gameController;
 

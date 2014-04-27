@@ -11,4 +11,6 @@
     <string name="INVITATIONS_list_title">Current Game Invites:</string>
     <string name="INTRO_logo_desc">Loading</string>
 
+    <string name="GAME_SETUP_title">Game Setup</string>
+
 </resources>

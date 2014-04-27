@@ -4,32 +4,28 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
-import android.widget.Button;
 import android.widget.TextView;
 
 import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
 import com.darkrockstudios.apps.mafia.eventbus.WorldStateChangedEvent;
 import com.darkrockstudios.apps.mafia.game.ClientType;
-import com.darkrockstudios.apps.mafia.game.GameController;
 import com.squareup.otto.Subscribe;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
-import butterknife.OnClick;
 
 /**
  * Created by Adam on 4/27/2014.
  */
 public class GameFragment extends BaseGameFragment
 {
+	private static final String FRAGTAG_GAME_SETUP = GameFragment.class.getSimpleName();
+
 	@InjectView(R.id.testTextView1)
 	TextView m_testView1;
 
 	@InjectView(R.id.testTextView2)
 	TextView m_testView2;
-
-	@InjectView(R.id.testButton)
-	Button m_testButton;
 
 	public static GameFragment newInstance()
 	{
@@ -39,6 +35,19 @@ public class GameFragment extends BaseGameFragment
 		fragment.setArguments( args );
 
 		return fragment;
+	}
+
+	@Override
+	public void onCreate( final Bundle savedInstanceState )
+	{
+		super.onCreate( savedInstanceState );
+		setRetainInstance( true );
+
+		if( m_gameController.geClientType() == ClientType.MASTER )
+		{
+			GameSetupFragment gameSetupFragment = GameSetupFragment.newInstance();
+			gameSetupFragment.show( getFragmentManager(), FRAGTAG_GAME_SETUP );
+		}
 	}
 
 	@Override
@@ -73,16 +82,6 @@ public class GameFragment extends BaseGameFragment
 		ButterKnife.reset( this );
 	}
 
-	@OnClick(R.id.testButton)
-	public void onSetupCompleteClicked( final View view )
-	{
-		GameController gameController = getGameController();
-		if( gameController != null )
-		{
-			gameController.completeSetup();
-		}
-	}
-
 	@Subscribe
 	public void onWorldStateChanged( final WorldStateChangedEvent event )
 	{
@@ -93,14 +92,5 @@ public class GameFragment extends BaseGameFragment
 	{
 		m_testView1.setText( m_gameController.geClientType().toString() );
 		m_testView2.setText( m_gameController.getWorld().getState().toString() );
-
-		if( m_gameController.geClientType() == ClientType.MASTER )
-		{
-			m_testButton.setVisibility( View.VISIBLE );
-		}
-		else
-		{
-			m_testButton.setVisibility( View.GONE );
-		}
 	}
 }
