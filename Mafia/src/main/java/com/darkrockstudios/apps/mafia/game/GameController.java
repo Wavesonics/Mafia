@@ -488,4 +488,12 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	{
 
 	}
+
+	public void leaveGame()
+	{
+		if( m_room != null )
+		{
+			Games.RealTimeMultiplayer.leave( getApiClient(), this, m_room.getRoomId() );
+		}
+	}
 }

@@ -137,6 +137,8 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 
 		if( which == Dialog.BUTTON_POSITIVE )
 		{
+			m_gameController.leaveGame();
+
 			Toast.makeText( this, "Leaving game...", Toast.LENGTH_LONG ).show();
 			finish();
 		}
