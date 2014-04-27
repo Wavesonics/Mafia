@@ -16,8 +16,8 @@
 
         <activity
             android:name="com.darkrockstudios.apps.mafia.IntroActivity"
-            android:label="@string/app_name" >
-            <intent-filter>
+            android:label="@string/app_name">
+        <intent-filter>
                 <action android:name="android.intent.action.MAIN" />
 
                 <category android:name="android.intent.category.LAUNCHER" />
@@ -25,8 +25,10 @@
         </activity>
 
         <activity
-            android:name="com.darkrockstudios.apps.mafia.MainMenuActivity"
-            android:label="@string/title_activity_main_menu" >
+            android:name=".MainActivity"
+            android:label="@string/title_activity_main_menu"
+            android:configChanges="keyboardHidden|orientation|screenSize"
+            android:screenOrientation="portrait">
         </activity>
     </application>
 
