@@ -34,6 +34,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	private static final String FRAGTAG             = GameController.class.getName() + ".GAMECONTROLLER";
 	private final static String FRAGTAG_INVITATIONS = MainActivity.class.getPackage() + ".INVITATIONS";
 	private final static String FRAGTAG_GAME        = MainActivity.class.getPackage() + ".GAME";
+	private final static String FRAGTAG_LOADING = MainActivity.class.getPackage() + ".LOADING";
 
 	protected MainActivity m_activity = null;
 
@@ -136,6 +137,9 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 
 			// prevent screen from sleeping during handshake
 			m_activity.getWindow().addFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
+
+			// go to loading screen while we wait for the proper callback
+			gotoLoadingScreen();
 		}
 		else if( requestCode == GameController.RC_WAITING_ROOM )
 		{
@@ -183,7 +187,8 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 			// prevent screen from sleeping during handshake
 			m_activity.getWindow().addFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
 
-			// go to game screen
+			// go to loading screen while we wait for the proper callback
+			gotoLoadingScreen();
 		}
 	}
 
@@ -240,6 +245,12 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		                                                                    GameController.MIN_PLAYERS - 1,
 		                                                                    GameController.MAX_PLAYERS - 1 );
 		startActivityForResult( intent, GameController.RC_SELECT_PLAYERS );
+	}
+
+	public void gotoLoadingScreen()
+	{
+		LoadingFragment fragment = LoadingFragment.newInstance();
+		m_activity.getFragmentManager().beginTransaction().replace( R.id.container, fragment, FRAGTAG_LOADING ).commit();
 	}
 
 	public void gotoGameScreen()
