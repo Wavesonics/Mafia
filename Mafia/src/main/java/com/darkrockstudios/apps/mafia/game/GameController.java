@@ -1,9 +1,13 @@
 package com.darkrockstudios.apps.mafia.game;
 
+import android.annotation.TargetApi;
 import android.app.Activity;
+import android.app.AlertDialog;
 import android.app.Fragment;
 import android.app.FragmentManager;
+import android.content.DialogInterface;
 import android.content.Intent;
+import android.os.Build;
 import android.os.Bundle;
 import android.util.Log;
 import android.view.WindowManager;
@@ -13,6 +17,7 @@ import com.darkrockstudios.apps.mafia.IntroActivity;
 import com.darkrockstudios.apps.mafia.InvitationsFragment;
 import com.darkrockstudios.apps.mafia.LoadingFragment;
 import com.darkrockstudios.apps.mafia.MainActivity;
+import com.darkrockstudios.apps.mafia.OsUtils;
 import com.darkrockstudios.apps.mafia.R;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
@@ -407,10 +412,33 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		m_activity.displayInfo( "Player Joined" );
 	}
 
+	@TargetApi(Build.VERSION_CODES.JELLY_BEAN_MR1)
 	@Override
 	public void onPeerLeft( final Room room, final List<String> peers )
 	{
 		m_activity.displayInfo( "Player Left" );
+
+		// We are the last person in the game, end it
+		if( peers.size() <= 1 )
+		{
+			leaveGame();
+
+			AlertDialog.Builder builder = new AlertDialog.Builder( m_activity );
+
+			EndGameDialogListener dialogListener = new EndGameDialogListener();
+
+			builder.setTitle( "Game Over" );
+			builder.setMessage( "Everyone has left." );
+			builder.setPositiveButton( "OK", dialogListener );
+			if( OsUtils.hasJellyBeanMr1() )
+			{
+				builder.setOnDismissListener( dialogListener );
+			}
+			builder.setOnCancelListener( dialogListener );
+			builder.setCancelable( false );
+
+			m_activity.showDialog( builder.create() );
+		}
 	}
 
 	@Override
@@ -494,6 +522,34 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		if( m_room != null )
 		{
 			Games.RealTimeMultiplayer.leave( getApiClient(), this, m_room.getRoomId() );
+		}
+	}
+
+	private class EndGameDialogListener implements DialogInterface.OnClickListener, DialogInterface.OnDismissListener, DialogInterface.OnCancelListener
+	{
+		@Override
+		public void onClick( final DialogInterface dialog, final int which )
+		{
+			resetGame();
+		}
+
+		@Override
+		public void onDismiss( final DialogInterface dialog )
+		{
+			resetGame();
+		}
+
+		@Override
+		public void onCancel( final DialogInterface dialog )
+		{
+			resetGame();
+		}
+
+		private void resetGame()
+		{
+			Intent intent = new Intent( m_activity, MainActivity.class );
+			m_activity.startActivity( intent );
+			m_activity.finish();
 		}
 	}
 }

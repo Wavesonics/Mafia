@@ -11,6 +11,9 @@ import android.widget.Toast;
 
 import com.darkrockstudios.apps.mafia.game.GameController;
 
+import java.util.ArrayList;
+import java.util.List;
+
 import butterknife.ButterKnife;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
@@ -19,7 +22,7 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 {
 	private GameController m_gameController;
 
-	private Dialog m_confirmExit;
+	private List<Dialog> m_dialogs = new ArrayList<>();
 
 	@Override
 	protected void onCreate( final Bundle savedInstanceState )
@@ -36,11 +39,11 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 	{
 		super.onPause();
 
-		if( m_confirmExit != null )
+		for( final Dialog dialog : m_dialogs )
 		{
-			m_confirmExit.dismiss();
-			m_confirmExit = null;
+			dialog.dismiss();
 		}
+		m_dialogs.clear();
 	}
 
 	@Override
@@ -74,8 +77,7 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 			builder.setNegativeButton( "Stay", this );
 			builder.setCancelable( false );
 
-			m_confirmExit = builder.create();
-			m_confirmExit.show();
+			showDialog( builder.create() );
 		}
 		else
 		{
@@ -118,6 +120,12 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 		Crouton.makeText( this, message, style ).show();
 	}
 
+	public void showDialog( final Dialog dialog )
+	{
+		m_dialogs.add( dialog );
+		dialog.show();
+	}
+
 	@Override
 	public void createGame()
 	{
@@ -133,8 +141,6 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 	@Override
 	public void onClick( final DialogInterface dialog, final int which )
 	{
-		m_confirmExit = null;
-
 		if( which == Dialog.BUTTON_POSITIVE )
 		{
 			m_gameController.leaveGame();
