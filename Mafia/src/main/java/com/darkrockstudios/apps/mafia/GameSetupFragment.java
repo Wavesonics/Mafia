@@ -5,8 +5,12 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.TextView;
+
+import com.darkrockstudios.apps.mafia.game.GameSetup;
 
 import butterknife.ButterKnife;
+import butterknife.InjectView;
 import butterknife.OnClick;
 
 /**
@@ -14,6 +18,11 @@ import butterknife.OnClick;
  */
 public class GameSetupFragment extends BaseGameFragment
 {
+	private GameSetup m_gameSetup;
+
+	@InjectView(R.id.GAME_SETUP_num_mobsters)
+	TextView m_numMobstersView;
+
 	public static GameSetupFragment newInstance()
 	{
 		GameSetupFragment fragment = new GameSetupFragment();
@@ -22,6 +31,14 @@ public class GameSetupFragment extends BaseGameFragment
 		fragment.setArguments( args );
 
 		return fragment;
+	}
+
+	@Override
+	public void onCreate( final Bundle savedInstanceState )
+	{
+		super.onCreate( savedInstanceState );
+
+		m_gameSetup = new GameSetup();
 	}
 
 	@Override
@@ -43,13 +60,37 @@ public class GameSetupFragment extends BaseGameFragment
 		return dialog;
 	}
 
+	@Override
+	public void onDestroyView()
+	{
+		super.onDestroyView();
+		ButterKnife.reset( this );
+	}
+
 	@OnClick(R.id.testButton)
 	public void onSetupCompleteClicked( final View view )
 	{
 		if( m_gameController != null )
 		{
 			dismiss();
-			m_gameController.completeSetup();
+			m_gameController.completeSetup( m_gameSetup );
 		}
+	}
+
+	@OnClick(R.id.GAME_SETUP_num_mobsters_decrease_button)
+	public void onDecreaseMobstersClicked( final View view )
+	{
+		m_gameSetup.decreaseMobsters();
+	}
+
+	@OnClick(R.id.GAME_SETUP_num_mobsters_increase_button)
+	public void onIncreaseMobstersClicked( final View view )
+	{
+		m_gameSetup.increaseMobsters( m_gameController );
+	}
+
+	private void updateView()
+	{
+		m_numMobstersView.setText( m_gameSetup.getNumMobsters() + "" );
 	}
 }
