@@ -7,10 +7,5 @@ import java.io.Serializable;
  */
 public class Message implements Serializable
 {
-	public int m_type;
 
-	public Message( final int type )
-	{
-		m_type = type;
-	}
 }

@@ -9,4 +9,5 @@ public class PlayerSpecification implements Serializable
 {
 	public String     m_participantId;
 	public PlayerRole m_role;
+	public boolean m_ready;
 }

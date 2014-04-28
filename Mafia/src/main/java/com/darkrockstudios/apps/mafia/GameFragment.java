@@ -4,6 +4,7 @@ import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+import android.widget.Button;
 import android.widget.TextView;
 
 import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
@@ -15,6 +16,7 @@ import com.squareup.otto.Subscribe;
 
 import butterknife.ButterKnife;
 import butterknife.InjectView;
+import butterknife.OnClick;
 
 /**
  * Created by Adam on 4/27/2014.
@@ -28,6 +30,9 @@ public class GameFragment extends BaseGameFragment
 
 	@InjectView(R.id.testTextView2)
 	TextView m_testView2;
+
+	@InjectView(R.id.ready_button)
+	Button m_readyButton;
 
 	public static GameFragment newInstance()
 	{
@@ -94,6 +99,8 @@ public class GameFragment extends BaseGameFragment
 	{
 		final World world = m_gameController.getWorld();
 
+		m_readyButton.setVisibility( View.GONE );
+
 		if( world.getState() == World.State.Setup )
 		{
 			m_testView1.setText( m_gameController.geClientType().toString() );
@@ -123,6 +130,29 @@ public class GameFragment extends BaseGameFragment
 			}
 
 			m_testView2.setText( description );
+
+			m_readyButton.setVisibility( View.VISIBLE );
 		}
+		else if( world.getState() == World.State.Night )
+		{
+			m_testView1.setText( "It's night time" );
+			m_testView2.setText( "Do night time actions!" );
+		}
+		else if( world.getState() == World.State.Day )
+		{
+			m_testView1.setText( "It's day time" );
+			m_testView2.setText( "Let's lynch some bitches!" );
+		}
+		else if( world.getState() == World.State.End )
+		{
+			m_testView1.setText( "GAME OVER" );
+			m_testView2.setText( "Oh well" );
+		}
+	}
+
+	@OnClick(R.id.ready_button)
+	public void onReadyClicked( final View view )
+	{
+		m_gameController.notifyReady();
 	}
 }

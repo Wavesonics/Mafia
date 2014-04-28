@@ -1,7 +1,9 @@
 package com.darkrockstudios.apps.mafia.game;
 
 import java.io.Serializable;
+import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 
 /**
@@ -37,6 +39,11 @@ public class GameSetup implements Serializable
 	public int getNumMobsters()
 	{
 		return m_numMobsters;
+	}
+
+	public List<PlayerSpecification> getAllPlayers()
+	{
+		return new ArrayList<>( m_players.values() );
 	}
 
 	public void addPlayer( final PlayerSpecification playerSpec )

@@ -21,6 +21,8 @@ import com.darkrockstudios.apps.mafia.OsUtils;
 import com.darkrockstudios.apps.mafia.R;
 import com.darkrockstudios.apps.mafia.game.message.GameSetupMessage;
 import com.darkrockstudios.apps.mafia.game.message.Message;
+import com.darkrockstudios.apps.mafia.game.message.PlayerReadyMessage;
+import com.darkrockstudios.apps.mafia.game.message.StateChangeMessage;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.GamesActivityResultCodes;
@@ -390,10 +392,60 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		m_world.setupGame( gameSetup );
 	}
 
+	public void notifyReady()
+	{
+		PlayerReadyMessage readyMessage = new PlayerReadyMessage( getLocalParticipantId(), true );
+		broadcastMessage( readyMessage );
+
+		// Server must mark him self locally
+		if( m_clientType == ClientType.MASTER )
+		{
+			markReady( getLocalParticipantId(), true );
+		}
+	}
+
+	public void markReady( final String participantId, final boolean ready )
+	{
+		PlayerSpecification playerSpec = m_world.getGameSetup().getPlayer( participantId );
+		playerSpec.m_ready = ready;
+
+		checkAllReady();
+	}
+
+	private void checkAllReady()
+	{
+		// Only the host should do something here
+		if( m_clientType == ClientType.MASTER )
+		{
+			boolean allReady = true;
+			for( final PlayerSpecification playerSpec : m_world.getGameSetup().getAllPlayers() )
+			{
+				if( !playerSpec.m_ready )
+				{
+					allReady = false;
+					break;
+				}
+			}
+
+			// All ready, start the game!
+			if( allReady )
+			{
+				StateChangeMessage stateChangeMessage = new StateChangeMessage( World.State.Night );
+				broadcastMessage( stateChangeMessage );
+
+				m_world.setState( World.State.Night );
+			}
+		}
+	}
+
+	public String getLocalParticipantId()
+	{
+		return m_room.getParticipantId( m_localPlayerId );
+	}
+
 	public PlayerSpecification getLocalPlayerSpec()
 	{
-		final String localParticipantId = m_room.getParticipantId( m_localPlayerId );
-		return m_world.getGameSetup().getPlayer( localParticipantId );
+		return m_world.getGameSetup().getPlayer( getLocalParticipantId() );
 	}
 
 	private void broadcastMessage( final Message message )
@@ -616,6 +668,16 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 
 			GameSetupMessage gameSetupMessage = (GameSetupMessage) message;
 			setupGame( gameSetupMessage.m_gameSetup );
+		}
+		else if( message instanceof PlayerReadyMessage )
+		{
+			PlayerReadyMessage readyMessage = (PlayerReadyMessage) message;
+			markReady( realTimeMessage.getSenderParticipantId(), readyMessage.m_ready );
+		}
+		else if( message instanceof StateChangeMessage )
+		{
+			StateChangeMessage stateChangeMessage = (StateChangeMessage) message;
+			m_world.setState( stateChangeMessage.m_state );
 		}
 	}
 
