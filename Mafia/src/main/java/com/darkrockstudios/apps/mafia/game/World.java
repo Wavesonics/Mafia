@@ -18,6 +18,7 @@ public class World
 	}
 
 	private State m_state;
+	private GameSetup m_gameSetup;
 
 	public World()
 	{
@@ -33,5 +34,16 @@ public class World
 	{
 		m_state = state;
 		BusProvider.get().post( new WorldStateChangedEvent() );
+	}
+
+	public void setupGame( final GameSetup gameSetup )
+	{
+		m_gameSetup = gameSetup;
+		setState( World.State.Pregame );
+	}
+
+	public GameSetup getGameSetup()
+	{
+		return m_gameSetup;
 	}
 }

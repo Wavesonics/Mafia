@@ -47,6 +47,7 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
+import java.util.Random;
 
 /**
  * Created by Adam on 4/26/2014.
@@ -75,7 +76,6 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	private Room m_room;
 
 	private ClientType m_clientType;
-	private GameSetup m_gameSetup;
 	private World      m_world;
 	private String     m_localPlayerId;
 
@@ -321,16 +321,79 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 
 	public void completeSetup( final GameSetup gameSetup )
 	{
+		assignRoles( gameSetup );
+
 		GameSetupMessage setupMessage = new GameSetupMessage( gameSetup );
 		broadcastMessage( setupMessage );
 
 		setupGame( gameSetup );
 	}
 
+	private void assignRoles( final GameSetup gameSetup )
+	{
+		Random rand = new Random();
+		List<Participant> unassignedPlayers = new ArrayList<>( m_room.getParticipants() );
+		// First assign all mobsters
+		for( int xx = 0; xx < gameSetup.getNumMobsters(); ++xx )
+		{
+			int ii = rand.nextInt( unassignedPlayers.size() - 1 );
+			Participant participant = unassignedPlayers.get( ii );
+			unassignedPlayers.remove( ii );
+
+			PlayerSpecification playerSpec = new PlayerSpecification();
+			playerSpec.m_participantId = participant.getParticipantId();
+			playerSpec.m_role = PlayerRole.Mobster;
+
+			gameSetup.addPlayer( playerSpec );
+		}
+
+		final int investigators = 1;
+		// Next pick investigators
+		if( unassignedPlayers.size() > 1 )
+		{
+			for( int xx = 0; xx < investigators; ++xx )
+			{
+				int ii = rand.nextInt( unassignedPlayers.size() - 1 );
+				Participant participant = unassignedPlayers.get( ii );
+				unassignedPlayers.remove( ii );
+
+				PlayerSpecification playerSpec = new PlayerSpecification();
+				playerSpec.m_participantId = participant.getParticipantId();
+				playerSpec.m_role = PlayerRole.Investigator;
+				gameSetup.addPlayer( playerSpec );
+			}
+		}
+		// Only one player left, he must be an investigator
+		else
+		{
+			Participant participant = unassignedPlayers.get( 0 );
+			unassignedPlayers.remove( 0 );
+
+			PlayerSpecification playerSpec = new PlayerSpecification();
+			playerSpec.m_participantId = participant.getParticipantId();
+			playerSpec.m_role = PlayerRole.Investigator;
+			gameSetup.addPlayer( playerSpec );
+		}
+
+		// Make everyone who is left a citizen
+		for( final Participant participant : unassignedPlayers )
+		{
+			PlayerSpecification playerSpec = new PlayerSpecification();
+			playerSpec.m_participantId = participant.getParticipantId();
+			playerSpec.m_role = PlayerRole.Citizen;
+			gameSetup.addPlayer( playerSpec );
+		}
+	}
+
 	private void setupGame( final GameSetup gameSetup )
 	{
-		m_gameSetup = gameSetup;
-		m_world.setState( World.State.Pregame );
+		m_world.setupGame( gameSetup );
+	}
+
+	public PlayerSpecification getLocalPlayerSpec()
+	{
+		final String localParticipantId = m_room.getParticipantId( m_localPlayerId );
+		return m_world.getGameSetup().getPlayer( localParticipantId );
 	}
 
 	private void broadcastMessage( final Message message )

@@ -9,6 +9,8 @@ import android.widget.TextView;
 import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
 import com.darkrockstudios.apps.mafia.eventbus.WorldStateChangedEvent;
 import com.darkrockstudios.apps.mafia.game.ClientType;
+import com.darkrockstudios.apps.mafia.game.PlayerSpecification;
+import com.darkrockstudios.apps.mafia.game.World;
 import com.squareup.otto.Subscribe;
 
 import butterknife.ButterKnife;
@@ -90,7 +92,37 @@ public class GameFragment extends BaseGameFragment
 
 	private void updateViews()
 	{
-		m_testView1.setText( m_gameController.geClientType().toString() );
-		m_testView2.setText( m_gameController.getWorld().getState().toString() );
+		final World world = m_gameController.getWorld();
+
+		if( world.getState() == World.State.Setup )
+		{
+			m_testView1.setText( m_gameController.geClientType().toString() );
+			m_testView2.setText( m_gameController.getWorld().getState().toString() );
+		}
+		else if( world.getState() == World.State.Pregame )
+		{
+			PlayerSpecification localPlayerSpec = m_gameController.getLocalPlayerSpec();
+
+			m_testView1.setText( localPlayerSpec.m_role.toString() );
+
+			final String description;
+			switch( localPlayerSpec.m_role )
+			{
+				case Citizen:
+					description = "You are a citizen. Try not to die. But hey, at lease you get to lynch people!";
+					break;
+				case Investigator:
+					description = "You are an Investigator. Investigate people at night!";
+					break;
+				case Mobster:
+					description = "You are a Mobster. Kill bitches at night!";
+					break;
+				default:
+					description = "ERROR";
+					break;
+			}
+
+			m_testView2.setText( description );
+		}
 	}
 }
