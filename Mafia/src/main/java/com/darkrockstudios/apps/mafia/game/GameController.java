@@ -635,6 +635,31 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		BusProvider.get().post( new SignInStateChangedEvent( true ) );
 	}
 
+	public boolean acceptInvitation()
+	{
+		final boolean accepted;
+		if( m_gameHelper.getInvitationId() != null )
+		{
+			RoomConfig.Builder roomConfigBuilder = makeBasicRoomConfigBuilder();
+			roomConfigBuilder.setInvitationIdToAccept( m_gameHelper.getInvitationId() );
+			Games.RealTimeMultiplayer.join( getApiClient(), roomConfigBuilder.build() );
+
+			// prevent screen from sleeping during handshake
+			m_activity.getWindow().addFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
+
+			// go to loading screen, a future callback will dump us into the waiting room
+			gotoLoadingScreen();
+
+			accepted = true;
+		}
+		else
+		{
+			accepted = false;
+		}
+
+		return accepted;
+	}
+
 	public void leaveGame()
 	{
 		if( m_room != null )

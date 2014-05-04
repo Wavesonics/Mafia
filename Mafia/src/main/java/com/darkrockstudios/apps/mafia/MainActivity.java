@@ -203,7 +203,10 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 		{
 			if( event.m_signedIn )
 			{
-				m_gameController.gotoInvitationsScreen();
+				if( !m_gameController.acceptInvitation() )
+				{
+					m_gameController.gotoInvitationsScreen();
+				}
 			}
 			else
 			{
