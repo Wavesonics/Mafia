@@ -644,6 +644,8 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 			roomConfigBuilder.setInvitationIdToAccept( m_gameHelper.getInvitationId() );
 			Games.RealTimeMultiplayer.join( getApiClient(), roomConfigBuilder.build() );
 
+			setClientType( ClientType.SLAVE );
+
 			// prevent screen from sleeping during handshake
 			m_activity.getWindow().addFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
 
