@@ -1,4 +1,4 @@
-package com.darkrockstudios.apps.mafia;
+package com.darkrockstudios.apps.mafia.fragments;
 
 import android.app.Activity;
 import android.app.DialogFragment;

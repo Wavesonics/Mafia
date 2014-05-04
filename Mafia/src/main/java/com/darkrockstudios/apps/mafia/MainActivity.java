@@ -3,13 +3,18 @@ package com.darkrockstudios.apps.mafia;
 import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
+import android.app.Fragment;
 import android.content.DialogInterface;
+import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
 import android.widget.Toast;
 
+import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
+import com.darkrockstudios.apps.mafia.eventbus.SignInStateChangedEvent;
 import com.darkrockstudios.apps.mafia.game.GameController;
+import com.squareup.otto.Subscribe;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -20,9 +25,19 @@ import de.keyboardsurfer.android.widget.crouton.Style;
 
 public class MainActivity extends Activity implements GameSetupHandler, DialogInterface.OnClickListener
 {
+	private EventHandler m_handler;
 	private GameController m_gameController;
 
 	private List<Dialog> m_dialogs = new ArrayList<>();
+
+	@Override
+	protected void onStart()
+	{
+		super.onStart();
+
+		m_handler = new EventHandler();
+		BusProvider.get().register( m_handler );
+	}
 
 	@Override
 	protected void onCreate( final Bundle savedInstanceState )
@@ -30,6 +45,14 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 		super.onCreate( savedInstanceState );
 		setContentView( R.layout.activity_main );
 		ButterKnife.inject( this );
+
+		GameController.gotoSignInScreen( this );
+	}
+
+	@Override
+	protected void onResume()
+	{
+		super.onResume();
 
 		m_gameController = GameController.get( getFragmentManager() );
 	}
@@ -44,6 +67,15 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 			dialog.dismiss();
 		}
 		m_dialogs.clear();
+	}
+
+	@Override
+	protected void onStop()
+	{
+		super.onStop();
+
+		BusProvider.get().unregister( m_handler );
+		m_handler = null;
 	}
 
 	@Override
@@ -134,6 +166,13 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 	}
 
 	@Override
+	protected void onActivityResult( int requestCode, int resultCode, Intent data )
+	{
+		super.onActivityResult( requestCode, resultCode, data );
+		m_gameController.onActivityResult( requestCode, resultCode, data );
+	}
+
+	@Override
 	public void createGame()
 	{
 		m_gameController.gotoSelectPlayers();
@@ -154,6 +193,27 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 
 			Toast.makeText( this, "Leaving game...", Toast.LENGTH_LONG ).show();
 			finish();
+		}
+	}
+
+	private class EventHandler
+	{
+		@Subscribe
+		public void onSignInStateChanged( final SignInStateChangedEvent event )
+		{
+			if( event.m_signedIn )
+			{
+				m_gameController.gotoInvitationsScreen();
+			}
+			else
+			{
+				// Signed out, if we aren't already at the sign in screen, go there
+				Fragment fragment = getFragmentManager().findFragmentByTag( GameController.FRAGTAG_SIGNIN );
+				if( fragment == null )
+				{
+					GameController.gotoSignInScreen( MainActivity.this );
+				}
+			}
 		}
 	}
 }

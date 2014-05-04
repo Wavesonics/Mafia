@@ -12,16 +12,19 @@ import android.os.Bundle;
 import android.util.Log;
 import android.view.WindowManager;
 
-import com.darkrockstudios.apps.mafia.GameFragment;
-import com.darkrockstudios.apps.mafia.IntroActivity;
-import com.darkrockstudios.apps.mafia.InvitationsFragment;
-import com.darkrockstudios.apps.mafia.LoadingFragment;
+import com.darkrockstudios.apps.mafia.BuildConfig;
 import com.darkrockstudios.apps.mafia.MainActivity;
-import com.darkrockstudios.apps.mafia.OsUtils;
 import com.darkrockstudios.apps.mafia.R;
+import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
+import com.darkrockstudios.apps.mafia.eventbus.SignInStateChangedEvent;
+import com.darkrockstudios.apps.mafia.fragments.GameFragment;
+import com.darkrockstudios.apps.mafia.fragments.InvitationsFragment;
+import com.darkrockstudios.apps.mafia.fragments.LoadingFragment;
+import com.darkrockstudios.apps.mafia.fragments.SignInFragment;
 import com.darkrockstudios.apps.mafia.game.rpc.GameSetupRPC;
 import com.darkrockstudios.apps.mafia.game.rpc.Network;
 import com.darkrockstudios.apps.mafia.game.rpc.StateChangeRPC;
+import com.darkrockstudios.apps.mafia.misc.OsUtils;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.GamesActivityResultCodes;
@@ -48,6 +51,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	private static final String TAG = GameController.class.getSimpleName();
 
 	private static final String FRAGTAG             = GameController.class.getName() + ".GAMECONTROLLER";
+	public final static  String FRAGTAG_SIGNIN  = MainActivity.class.getPackage() + ".SIGNIN";
 	private final static String FRAGTAG_INVITATIONS = MainActivity.class.getPackage() + ".INVITATIONS";
 	private final static String FRAGTAG_GAME        = MainActivity.class.getPackage() + ".GAME";
 	private final static String FRAGTAG_LOADING = MainActivity.class.getPackage() + ".LOADING";
@@ -109,19 +113,23 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		m_network = new Network( this );
 
 		m_gameHelper = new GameHelper( m_activity, GameHelper.CLIENT_GAMES );
+		m_gameHelper.enableDebugLog( BuildConfig.DEBUG );
 		m_gameHelper.setup( this );
-
-		m_world = new World();
 
 		m_gameHelper.onStart( m_activity );
 
-		gotoInvitationsScreen();
+		m_world = new World();
+	}
+
+	@Override
+	public void onStart()
+	{
+		super.onStart();
 	}
 
 	@Override
 	public void onDestroy()
 	{
-		Log.d( "mab", this + ": onDestroy()" );
 		super.onDestroy();
 		m_gameHelper.onStop();
 	}
@@ -144,6 +152,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 			if( responseCode != Activity.RESULT_OK )
 			{
 				// user canceled
+				leaveGame();
 				return;
 			}
 
@@ -281,6 +290,12 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	public GoogleApiClient getApiClient()
 	{
 		return m_gameHelper.getApiClient();
+	}
+
+	public static void gotoSignInScreen( final Activity activity )
+	{
+		SignInFragment fragment = SignInFragment.newInstance();
+		activity.getFragmentManager().beginTransaction().replace( R.id.container, fragment, FRAGTAG_SIGNIN ).commit();
 	}
 
 	public void gotoInvitationsScreen()
@@ -609,16 +624,15 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	@Override
 	public void onSignInFailed()
 	{
-		// If we fail sign in here, go back to the IntroActivity
-		Intent intent = new Intent( m_activity, IntroActivity.class );
-		startActivity( intent );
-		m_activity.finish();
+		Log.d( TAG, "onSignInFailed" );
+		BusProvider.get().post( new SignInStateChangedEvent( false ) );
 	}
 
 	@Override
 	public void onSignInSucceeded()
 	{
-
+		Log.d( TAG, "onSignInSucceeded" );
+		BusProvider.get().post( new SignInStateChangedEvent( true ) );
 	}
 
 	public void leaveGame()

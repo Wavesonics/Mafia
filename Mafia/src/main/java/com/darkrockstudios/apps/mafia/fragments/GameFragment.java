@@ -1,4 +1,4 @@
-package com.darkrockstudios.apps.mafia;
+package com.darkrockstudios.apps.mafia.fragments;
 
 import android.os.Bundle;
 import android.view.LayoutInflater;
@@ -7,6 +7,7 @@ import android.view.ViewGroup;
 import android.widget.Button;
 import android.widget.TextView;
 
+import com.darkrockstudios.apps.mafia.R;
 import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
 import com.darkrockstudios.apps.mafia.eventbus.WorldStateChangedEvent;
 import com.darkrockstudios.apps.mafia.game.ClientType;

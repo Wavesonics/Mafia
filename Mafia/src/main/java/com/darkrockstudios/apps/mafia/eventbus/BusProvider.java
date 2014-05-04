@@ -14,7 +14,7 @@ public final class BusProvider
 
 	}
 
-	public static Bus get()
+	public synchronized static Bus get()
 	{
 		if( m_bus == null )
 		{

@@ -1,4 +1,4 @@
-package com.darkrockstudios.apps.mafia;
+package com.darkrockstudios.apps.mafia.misc;
 
 import android.os.Build;
 

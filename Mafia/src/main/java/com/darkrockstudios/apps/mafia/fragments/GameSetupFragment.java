@@ -1,4 +1,4 @@
-package com.darkrockstudios.apps.mafia;
+package com.darkrockstudios.apps.mafia.fragments;
 
 import android.app.Dialog;
 import android.os.Bundle;
@@ -7,6 +7,7 @@ import android.view.View;
 import android.view.ViewGroup;
 import android.widget.TextView;
 
+import com.darkrockstudios.apps.mafia.R;
 import com.darkrockstudios.apps.mafia.game.GameSetup;
 
 import butterknife.ButterKnife;

@@ -1,10 +1,12 @@
-package com.darkrockstudios.apps.mafia;
+package com.darkrockstudios.apps.mafia.fragments;
 
 import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
 import android.view.ViewGroup;
+
+import com.darkrockstudios.apps.mafia.R;
 
 /**
  * Created by Adam on 4/27/2014.
