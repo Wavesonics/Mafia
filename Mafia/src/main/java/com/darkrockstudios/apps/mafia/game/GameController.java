@@ -551,7 +551,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		m_activity.displayInfo( "Player Left" );
 
 		// We are the last person in the game, end it
-		if( peers.size() <= 1 )
+		if( numConnectedParticipants() <= 1 )
 		{
 			leaveGame();
 
@@ -571,6 +571,21 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 
 			m_activity.showDialog( builder.create() );
 		}
+	}
+
+	private int numConnectedParticipants()
+	{
+		int numConnected = 0;
+
+		for( final String participantIds : m_room.getParticipantIds() )
+		{
+			if( m_room.getParticipantStatus( participantIds ) == Participant.STATUS_JOINED )
+			{
+				++numConnected;
+			}
+		}
+
+		return numConnected;
 	}
 
 	@Override
