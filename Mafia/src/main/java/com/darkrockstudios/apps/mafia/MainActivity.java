@@ -56,12 +56,19 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 	@Override
 	public boolean onOptionsItemSelected( final MenuItem item )
 	{
-		int id = item.getItemId();
+		final boolean selected;
+
+		final int id = item.getItemId();
 		if( id == R.id.action_settings )
 		{
-			return true;
+			selected = true;
 		}
-		return super.onOptionsItemSelected( item );
+		else
+		{
+			selected = super.onOptionsItemSelected( item );
+		}
+
+		return selected;
 	}
 
 	@Override

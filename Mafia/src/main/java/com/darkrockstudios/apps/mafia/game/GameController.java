@@ -19,10 +19,9 @@ import com.darkrockstudios.apps.mafia.LoadingFragment;
 import com.darkrockstudios.apps.mafia.MainActivity;
 import com.darkrockstudios.apps.mafia.OsUtils;
 import com.darkrockstudios.apps.mafia.R;
-import com.darkrockstudios.apps.mafia.game.message.GameSetupMessage;
-import com.darkrockstudios.apps.mafia.game.message.Message;
-import com.darkrockstudios.apps.mafia.game.message.PlayerReadyMessage;
-import com.darkrockstudios.apps.mafia.game.message.StateChangeMessage;
+import com.darkrockstudios.apps.mafia.game.rpc.GameSetupRPC;
+import com.darkrockstudios.apps.mafia.game.rpc.Network;
+import com.darkrockstudios.apps.mafia.game.rpc.StateChangeRPC;
 import com.google.android.gms.common.api.GoogleApiClient;
 import com.google.android.gms.games.Games;
 import com.google.android.gms.games.GamesActivityResultCodes;
@@ -31,22 +30,12 @@ import com.google.android.gms.games.multiplayer.Invitation;
 import com.google.android.gms.games.multiplayer.Multiplayer;
 import com.google.android.gms.games.multiplayer.OnInvitationReceivedListener;
 import com.google.android.gms.games.multiplayer.Participant;
-import com.google.android.gms.games.multiplayer.realtime.RealTimeMessage;
-import com.google.android.gms.games.multiplayer.realtime.RealTimeMessageReceivedListener;
-import com.google.android.gms.games.multiplayer.realtime.RealTimeMultiplayer;
 import com.google.android.gms.games.multiplayer.realtime.Room;
 import com.google.android.gms.games.multiplayer.realtime.RoomConfig;
 import com.google.android.gms.games.multiplayer.realtime.RoomStatusUpdateListener;
 import com.google.android.gms.games.multiplayer.realtime.RoomUpdateListener;
 import com.google.example.games.basegameutils.GameHelper;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInput;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutput;
-import java.io.ObjectOutputStream;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Random;
@@ -54,7 +43,7 @@ import java.util.Random;
 /**
  * Created by Adam on 4/26/2014.
  */
-public class GameController extends Fragment implements OnInvitationReceivedListener, RoomUpdateListener, RoomStatusUpdateListener, RealTimeMessageReceivedListener, GameHelper.GameHelperListener, RealTimeMultiplayer.ReliableMessageSentCallback
+public class GameController extends Fragment implements OnInvitationReceivedListener, RoomUpdateListener, RoomStatusUpdateListener, GameHelper.GameHelperListener
 {
 	private static final String TAG = GameController.class.getSimpleName();
 
@@ -74,6 +63,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	public final static int MAX_PLAYERS = 8;
 
 	private GameHelper m_gameHelper;
+	private Network m_network;
 
 	private Room m_room;
 
@@ -111,6 +101,24 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	}
 
 	@Override
+	public void onCreate( final Bundle savedInstanceState )
+	{
+		super.onCreate( savedInstanceState );
+		setRetainInstance( true );
+
+		m_network = new Network( this );
+
+		m_gameHelper = new GameHelper( m_activity, GameHelper.CLIENT_GAMES );
+		m_gameHelper.setup( this );
+
+		m_world = new World();
+
+		m_gameHelper.onStart( m_activity );
+
+		gotoInvitationsScreen();
+	}
+
+	@Override
 	public void onDestroy()
 	{
 		Log.d( "mab", this + ": onDestroy()" );
@@ -123,22 +131,6 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	{
 		super.onDetach();
 		m_activity = null;
-	}
-
-	@Override
-	public void onCreate( final Bundle savedInstanceState )
-	{
-		super.onCreate( savedInstanceState );
-		setRetainInstance( true );
-
-		m_gameHelper = new GameHelper( m_activity, GameHelper.CLIENT_GAMES );
-		m_gameHelper.setup( this );
-
-		m_world = new World();
-
-		m_gameHelper.onStart( m_activity );
-
-		gotoInvitationsScreen();
 	}
 
 	@Override
@@ -216,21 +208,30 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 				// in this example, we take the simple approach and just leave the room:
 				Games.RealTimeMultiplayer.leave( getApiClient(), this, getRoom().getRoomId() );
 				m_activity.getWindow().clearFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
+
+				gotoInvitationsScreen();
 			}
 			else if( responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM )
 			{
 				// player wants to leave the room.
 				Games.RealTimeMultiplayer.leave( getApiClient(), this, getRoom().getRoomId() );
 				m_activity.getWindow().clearFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
+
+				gotoInvitationsScreen();
 			}
 		}
+	}
+
+	public Network getNetwork()
+	{
+		return m_network;
 	}
 
 	// create a RoomConfigBuilder that's appropriate for your implementation
 	private RoomConfig.Builder makeBasicRoomConfigBuilder()
 	{
 		return RoomConfig.builder( this )
-		                 .setMessageReceivedListener( this )
+		                 .setMessageReceivedListener( m_network )
 		                 .setRoomStatusUpdateListener( this );
 	}
 
@@ -325,8 +326,8 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	{
 		assignRoles( gameSetup );
 
-		GameSetupMessage setupMessage = new GameSetupMessage( gameSetup );
-		broadcastMessage( setupMessage );
+		GameSetupRPC setupMessage = new GameSetupRPC( gameSetup );
+		m_network.executeRpc( setupMessage );
 
 		setupGame( gameSetup );
 	}
@@ -387,21 +388,9 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		}
 	}
 
-	private void setupGame( final GameSetup gameSetup )
+	public void setupGame( final GameSetup gameSetup )
 	{
 		m_world.setupGame( gameSetup );
-	}
-
-	public void notifyReady()
-	{
-		PlayerReadyMessage readyMessage = new PlayerReadyMessage( getLocalParticipantId(), true );
-		broadcastMessage( readyMessage );
-
-		// Server must mark him self locally
-		if( m_clientType == ClientType.MASTER )
-		{
-			markReady( getLocalParticipantId(), true );
-		}
 	}
 
 	public void markReady( final String participantId, final boolean ready )
@@ -430,8 +419,8 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 			// All ready, start the game!
 			if( allReady )
 			{
-				StateChangeMessage stateChangeMessage = new StateChangeMessage( World.State.Night );
-				broadcastMessage( stateChangeMessage );
+				StateChangeRPC stateChange = new StateChangeRPC( World.State.Night );
+				m_network.executeRpc( stateChange );
 
 				m_world.setState( World.State.Night );
 			}
@@ -446,31 +435,6 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	public PlayerSpecification getLocalPlayerSpec()
 	{
 		return m_world.getGameSetup().getPlayer( getLocalParticipantId() );
-	}
-
-	private void broadcastMessage( final Message message )
-	{
-		try
-		{
-			byte[] messageData = messageToBytes( message );
-
-			final String localParticipantId = m_room.getParticipantId( m_localPlayerId );
-			for( final Participant p : m_room.getParticipants() )
-			{
-				if( !p.getParticipantId().equals( localParticipantId ) )
-				{
-					Games.RealTimeMultiplayer.sendReliableMessage( getApiClient(),
-					                                               this,
-					                                               messageData,
-					                                               m_room.getRoomId(),
-					                                               p.getParticipantId() );
-				}
-			}
-		}
-		catch( final IOException e )
-		{
-			e.printStackTrace();
-		}
 	}
 
 	@Override
@@ -502,6 +466,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 
 			// show error message, return to main screen.
 			m_activity.displayError( "Failed to join Game" );
+			gotoInvitationsScreen();
 		}
 		else
 		{
@@ -654,109 +619,6 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	public void onSignInSucceeded()
 	{
 
-	}
-
-	@Override
-	public void onRealTimeMessageReceived( final RealTimeMessage realTimeMessage )
-	{
-		byte[] messageData = realTimeMessage.getMessageData();
-		Message message = bytesToMessage( messageData );
-
-		if( message instanceof GameSetupMessage )
-		{
-			Log.d( TAG, "Game setup received" );
-
-			GameSetupMessage gameSetupMessage = (GameSetupMessage) message;
-			setupGame( gameSetupMessage.m_gameSetup );
-		}
-		else if( message instanceof PlayerReadyMessage )
-		{
-			PlayerReadyMessage readyMessage = (PlayerReadyMessage) message;
-			markReady( realTimeMessage.getSenderParticipantId(), readyMessage.m_ready );
-		}
-		else if( message instanceof StateChangeMessage )
-		{
-			StateChangeMessage stateChangeMessage = (StateChangeMessage) message;
-			m_world.setState( stateChangeMessage.m_state );
-		}
-	}
-
-	@Override
-	public void onRealTimeMessageSent( final int statusCode, final int tokenId, final String recipientParticipantId )
-	{
-
-	}
-
-	private byte[] messageToBytes( final Message message ) throws IOException
-	{
-		byte[] bytes;
-
-		ByteArrayOutputStream bos = new ByteArrayOutputStream();
-		ObjectOutput out = new ObjectOutputStream( bos );
-		try
-		{
-			out.writeObject( message );
-			bytes = bos.toByteArray();
-		}
-		finally
-		{
-			try
-			{
-				out.close();
-			}
-			catch( final IOException ignore )
-			{
-
-			}
-		}
-
-		return bytes;
-	}
-
-	private Message bytesToMessage( final byte[] messageData )
-	{
-		Message message = null;
-
-		ByteArrayInputStream bis = new ByteArrayInputStream( messageData );
-		ObjectInput in = null;
-		try
-		{
-			in = new ObjectInputStream( bis );
-			Object obj = in.readObject();
-
-			if( obj instanceof Message )
-			{
-				message = (Message) obj;
-			}
-		}
-		catch( ClassNotFoundException | IOException e )
-		{
-			e.printStackTrace();
-		}
-		finally
-		{
-			try
-			{
-				bis.close();
-			}
-			catch( final IOException ignore )
-			{
-
-			}
-			try
-			{
-				if( in != null )
-				{
-					in.close();
-				}
-			}
-			catch( final IOException ignore )
-			{
-
-			}
-		}
-
-		return message;
 	}
 
 	public void leaveGame()

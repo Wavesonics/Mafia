@@ -12,6 +12,7 @@ import com.darkrockstudios.apps.mafia.eventbus.WorldStateChangedEvent;
 import com.darkrockstudios.apps.mafia.game.ClientType;
 import com.darkrockstudios.apps.mafia.game.PlayerSpecification;
 import com.darkrockstudios.apps.mafia.game.World;
+import com.darkrockstudios.apps.mafia.game.rpc.PlayerReadyRPC;
 import com.squareup.otto.Subscribe;
 
 import butterknife.ButterKnife;
@@ -153,6 +154,7 @@ public class GameFragment extends BaseGameFragment
 	@OnClick(R.id.ready_button)
 	public void onReadyClicked( final View view )
 	{
-		m_gameController.notifyReady();
+		PlayerReadyRPC playerReady = new PlayerReadyRPC( m_gameController.getLocalParticipantId(), true );
+		m_gameController.getNetwork().executeRpc( playerReady );
 	}
 }

@@ -1,4 +1,3 @@
-apply plugin: 'android-sdk-manager'
 apply plugin: 'android'
 
 dependencies {
@@ -46,7 +45,7 @@ android {
         }
         debug {
             debuggable true
-            zipAlign false
+            zipAlign true
             runProguard false
         }
     }
