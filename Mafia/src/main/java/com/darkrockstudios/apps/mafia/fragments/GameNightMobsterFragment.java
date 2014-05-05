@@ -12,6 +12,7 @@ import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
 import com.darkrockstudios.apps.mafia.eventbus.VoteCastEvent;
 import com.darkrockstudios.apps.mafia.game.PlayerVoteStatus;
 import com.darkrockstudios.apps.mafia.game.Vote;
+import com.darkrockstudios.apps.mafia.game.rpc.PlayerReadyRPC;
 import com.darkrockstudios.apps.mafia.game.rpc.VoteRPC;
 import com.squareup.otto.Subscribe;
 
@@ -132,7 +133,8 @@ public class GameNightMobsterFragment extends BaseGameFragment implements Adapte
 
 			if( event.m_voterId.equals( localParticipantId ) )
 			{
-				m_gameController.markReady( localParticipantId, true );
+				PlayerReadyRPC playerReady = new PlayerReadyRPC( m_gameController, true );
+				m_gameController.getNetwork().executeRpc( playerReady );
 			}
 		}
 	}

@@ -55,4 +55,10 @@ public class GameSetup implements Serializable
 	{
 		return m_players.get( participantId );
 	}
+
+	public void killPlayer( final String participantId )
+	{
+		PlayerSpecification playerSpec = m_players.get( participantId );
+		playerSpec.m_alive = false;
+	}
 }

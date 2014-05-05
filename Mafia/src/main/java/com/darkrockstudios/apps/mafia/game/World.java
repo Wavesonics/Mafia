@@ -2,6 +2,7 @@ package com.darkrockstudios.apps.mafia.game;
 
 import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
 import com.darkrockstudios.apps.mafia.eventbus.WorldStateChangedEvent;
+import com.google.android.gms.games.multiplayer.Participant;
 import com.google.android.gms.games.multiplayer.realtime.Room;
 
 /**
@@ -41,7 +42,7 @@ public class World
 		m_state = state;
 		resetPlayerReadyStates();
 
-		m_currentVote = null;
+		String voteWinnerId = null;
 
 		if( m_state == State.Night )
 		{
@@ -49,15 +50,36 @@ public class World
 		}
 		else if( m_state == State.Day )
 		{
-			// Setup day vote here
+			// Kill the player who won the Mobster vote
+			Participant voteWinner = m_currentVote.getVoteWinner();
+			voteWinnerId = voteWinner.getParticipantId();
+			m_gameSetup.killPlayer( voteWinnerId );
+
+			setupLynchingVote();
+		}
+		else
+		{
+			m_currentVote = null;
 		}
 
-		BusProvider.get().post( new WorldStateChangedEvent( m_state ) );
+		BusProvider.get().post( new WorldStateChangedEvent( m_state, voteWinnerId ) );
 	}
 
 	public Vote getCurrentVote()
 	{
 		return m_currentVote;
+	}
+
+	private void setupLynchingVote()
+	{
+		m_currentVote = new Vote();
+
+		final Room room = m_gameController.getRoom();
+		for( final PlayerSpecification playerSpec : m_gameSetup.getAllPlayers() )
+		{
+			m_currentVote.addNominee( room.getParticipant( playerSpec.m_participantId ) );
+			m_currentVote.addVoter( room.getParticipant( playerSpec.m_participantId ) );
+		}
 	}
 
 	private void setupMobsterVote()

@@ -370,7 +370,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 			boolean allReady = true;
 			for( final PlayerSpecification playerSpec : m_world.getGameSetup().getAllPlayers() )
 			{
-				if( !playerSpec.m_ready )
+				if( !playerSpec.m_ready && playerSpec.m_alive )
 				{
 					allReady = false;
 					break;
@@ -562,7 +562,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		{
 			Participant participant = m_room.getParticipant( participantIds );
 
-			if( participant.getStatus() == Participant.STATUS_JOINED && participant.isConnectedToRoom() )
+			if( participant.isConnectedToRoom() )
 			{
 				++numConnected;
 			}

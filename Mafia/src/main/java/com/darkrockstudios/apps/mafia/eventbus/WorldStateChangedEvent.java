@@ -8,9 +8,17 @@ import com.darkrockstudios.apps.mafia.game.World;
 public class WorldStateChangedEvent
 {
 	public final World.State m_newState;
+	public final String      m_voteWinnerId;
 
 	public WorldStateChangedEvent( final World.State newState )
 	{
 		m_newState = newState;
+		m_voteWinnerId = null;
+	}
+
+	public WorldStateChangedEvent( final World.State newState, final String voteWinnerId )
+	{
+		m_newState = newState;
+		m_voteWinnerId = voteWinnerId;
 	}
 }

@@ -47,16 +47,19 @@ public class Vote
 		final Participant voter = room.getParticipant( voterId );
 		final Participant nominee = room.getParticipant( nomineeId );
 
-		for( final PlayerVoteStatus playerVoteStatus : m_nominees )
+		for( final PlayerVoteStatus curNominee : m_nominees )
 		{
-			if( playerVoteStatus.m_participant.getParticipantId().equals( nomineeId ) )
+			if( curNominee.m_participant.getParticipantId().equals( nomineeId ) )
 			{
-				playerVoteStatus.addVote( voter );
+				curNominee.addVote( voter );
 				m_notVoted.remove( voter );
 
 				Log.d( TAG, voter.getDisplayName() + " successfully voted for: " + nominee.getDisplayName() );
-
-				break;
+			}
+			// Ensure we haven't double voted by removing us from anyone else
+			else
+			{
+				curNominee.removeVote( voter );
 			}
 		}
 
@@ -66,5 +69,22 @@ public class Vote
 	public boolean isVoteComplete()
 	{
 		return m_notVoted.isEmpty();
+	}
+
+	public Participant getVoteWinner()
+	{
+		Participant winner = null;
+
+		int highestVotes = -1;
+		for( final PlayerVoteStatus nominee : m_nominees )
+		{
+			if( nominee.getVotes() > highestVotes )
+			{
+				winner = nominee.m_participant;
+				highestVotes = nominee.getVotes();
+			}
+		}
+
+		return winner;
 	}
 }

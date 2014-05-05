@@ -71,7 +71,7 @@ public class BaseGameFragment extends DialogFragment
 					Nav.gotoNightScreen( m_gameController );
 					break;
 				case Day:
-					Nav.gotoDayScreen( m_gameController );
+					Nav.gotoDayScreen( m_gameController, event.m_voteWinnerId );
 					break;
 				case End:
 					Nav.gotoEndScreen( m_gameController );

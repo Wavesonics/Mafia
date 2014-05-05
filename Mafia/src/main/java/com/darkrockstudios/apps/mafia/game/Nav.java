@@ -8,6 +8,7 @@ import com.darkrockstudios.apps.mafia.MainActivity;
 import com.darkrockstudios.apps.mafia.R;
 import com.darkrockstudios.apps.mafia.fragments.BaseGameFragment;
 import com.darkrockstudios.apps.mafia.fragments.GameDayFragment;
+import com.darkrockstudios.apps.mafia.fragments.GameDeadFragment;
 import com.darkrockstudios.apps.mafia.fragments.GameEndFragment;
 import com.darkrockstudios.apps.mafia.fragments.GameNightCitizenFragment;
 import com.darkrockstudios.apps.mafia.fragments.GameNightInvestigatorFragment;
@@ -99,15 +100,21 @@ public final class Nav
 		gotoGameFragment( gameController, fragment );
 	}
 
-	public static void gotoDayScreen( final GameController gameController )
+	public static void gotoDayScreen( final GameController gameController, final String voteWinnerId )
 	{
-		final GameDayFragment fragment = GameDayFragment.newInstance();
+		final GameDayFragment fragment = GameDayFragment.newInstance( voteWinnerId );
 		gotoGameFragment( gameController, fragment );
 	}
 
 	public static void gotoEndScreen( final GameController gameController )
 	{
 		final GameEndFragment fragment = GameEndFragment.newInstance();
+		gotoGameFragment( gameController, fragment );
+	}
+
+	public static void gotoDeadScreen( final GameController gameController )
+	{
+		final GameDeadFragment fragment = GameDeadFragment.newInstance();
 		gotoGameFragment( gameController, fragment );
 	}
 

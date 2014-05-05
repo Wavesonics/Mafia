@@ -1,6 +1,5 @@
 package com.darkrockstudios.apps.mafia.game.rpc;
 
-import com.darkrockstudios.apps.mafia.game.ClientType;
 import com.darkrockstudios.apps.mafia.game.GameController;
 import com.darkrockstudios.apps.mafia.game.Vote;
 
@@ -25,12 +24,6 @@ public class VoteRPC extends RemoteProcedureCall
 	{
 		Vote vote = gameController.getWorld().getCurrentVote();
 		vote.vote( gameController, m_voterId, m_nomineeId );
-
-		// The master should not progress the game
-		if( vote.isVoteComplete() && gameController.getClientType() == ClientType.MASTER )
-		{
-
-		}
 	}
 
 	@Override

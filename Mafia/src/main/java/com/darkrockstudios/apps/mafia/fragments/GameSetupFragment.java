@@ -82,12 +82,14 @@ public class GameSetupFragment extends BaseGameFragment
 	public void onDecreaseMobstersClicked( final View view )
 	{
 		m_gameSetup.decreaseMobsters();
+		updateView();
 	}
 
 	@OnClick(R.id.GAME_SETUP_num_mobsters_increase_button)
 	public void onIncreaseMobstersClicked( final View view )
 	{
 		m_gameSetup.increaseMobsters( m_gameController );
+		updateView();
 	}
 
 	private void updateView()
