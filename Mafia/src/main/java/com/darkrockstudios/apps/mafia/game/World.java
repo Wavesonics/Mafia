@@ -14,7 +14,8 @@ public class World
 		Pregame,
 		Night,
 		Day,
-		End
+		End,
+		Invalid
 	}
 
 	private State m_state;
@@ -30,16 +31,26 @@ public class World
 		return m_state;
 	}
 
-	public void setState( final State state )
+	public void changeState( final State state )
 	{
 		m_state = state;
-		BusProvider.get().post( new WorldStateChangedEvent() );
+		resetPlayerReadyStates();
+
+		BusProvider.get().post( new WorldStateChangedEvent( m_state ) );
+	}
+
+	private void resetPlayerReadyStates()
+	{
+		for( final PlayerSpecification playerSpec : m_gameSetup.getAllPlayers() )
+		{
+			playerSpec.m_ready = false;
+		}
 	}
 
 	public void setupGame( final GameSetup gameSetup )
 	{
 		m_gameSetup = gameSetup;
-		setState( World.State.Pregame );
+		changeState( World.State.Pregame );
 	}
 
 	public GameSetup getGameSetup()

@@ -14,6 +14,7 @@ import android.widget.Toast;
 import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
 import com.darkrockstudios.apps.mafia.eventbus.SignInStateChangedEvent;
 import com.darkrockstudios.apps.mafia.game.GameController;
+import com.darkrockstudios.apps.mafia.game.Nav;
 import com.squareup.otto.Subscribe;
 
 import java.util.ArrayList;
@@ -25,7 +26,7 @@ import de.keyboardsurfer.android.widget.crouton.Style;
 
 public class MainActivity extends Activity implements GameSetupHandler, DialogInterface.OnClickListener
 {
-	private EventHandler m_handler;
+	private EventHandler   m_handler;
 	private GameController m_gameController;
 
 	private List<Dialog> m_dialogs = new ArrayList<>();
@@ -46,7 +47,7 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 		setContentView( R.layout.activity_main );
 		ButterKnife.inject( this );
 
-		GameController.gotoSignInScreen( this );
+		Nav.gotoSignInScreen( this );
 	}
 
 	@Override
@@ -166,7 +167,7 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 	}
 
 	@Override
-	protected void onActivityResult( int requestCode, int resultCode, Intent data )
+	protected void onActivityResult( final int requestCode, final int resultCode, final Intent data )
 	{
 		super.onActivityResult( requestCode, resultCode, data );
 		m_gameController.onActivityResult( requestCode, resultCode, data );
@@ -175,13 +176,13 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 	@Override
 	public void createGame()
 	{
-		m_gameController.gotoSelectPlayers();
+		Nav.gotoSelectPlayers( m_gameController );
 	}
 
 	@Override
 	public void joinGame()
 	{
-		m_gameController.gotoInvitationInbox();
+		Nav.gotoInvitationInbox( m_gameController );
 	}
 
 	@Override
@@ -205,16 +206,16 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 			{
 				if( !m_gameController.acceptInvitation() )
 				{
-					m_gameController.gotoInvitationsScreen();
+					Nav.gotoInvitationsScreen( MainActivity.this );
 				}
 			}
 			else
 			{
 				// Signed out, if we aren't already at the sign in screen, go there
-				Fragment fragment = getFragmentManager().findFragmentByTag( GameController.FRAGTAG_SIGNIN );
+				Fragment fragment = getFragmentManager().findFragmentByTag( Nav.FRAGTAG_SIGNIN );
 				if( fragment == null )
 				{
-					GameController.gotoSignInScreen( MainActivity.this );
+					Nav.gotoSignInScreen( MainActivity.this );
 				}
 			}
 		}

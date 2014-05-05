@@ -23,9 +23,9 @@ import butterknife.OnClick;
 /**
  * Created by Adam on 4/27/2014.
  */
-public class GameFragment extends BaseGameFragment
+public class PreGameFragment extends BaseGameFragment
 {
-	private static final String FRAGTAG_GAME_SETUP = GameFragment.class.getSimpleName();
+	private static final String FRAGTAG_GAME_SETUP = PreGameFragment.class.getSimpleName();
 
 	@InjectView(R.id.testTextView1)
 	TextView m_testView1;
@@ -36,9 +36,11 @@ public class GameFragment extends BaseGameFragment
 	@InjectView(R.id.ready_button)
 	Button m_readyButton;
 
-	public static GameFragment newInstance()
+	private EventHandler m_eventHandler;
+
+	public static PreGameFragment newInstance()
 	{
-		GameFragment fragment = new GameFragment();
+		PreGameFragment fragment = new PreGameFragment();
 
 		Bundle args = new Bundle();
 		fragment.setArguments( args );
@@ -62,7 +64,7 @@ public class GameFragment extends BaseGameFragment
 	@Override
 	public View onCreateView( final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState )
 	{
-		final View view = inflater.inflate( R.layout.fragment_game, container, false );
+		final View view = inflater.inflate( R.layout.fragment_game_pre, container, false );
 		ButterKnife.inject( this, view );
 
 		updateViews();
@@ -74,14 +76,18 @@ public class GameFragment extends BaseGameFragment
 	public void onResume()
 	{
 		super.onResume();
-		BusProvider.get().register( this );
+
+		m_eventHandler = new EventHandler();
+		BusProvider.get().register( m_eventHandler );
 	}
 
 	@Override
 	public void onPause()
 	{
 		super.onPause();
-		BusProvider.get().unregister( this );
+
+		BusProvider.get().unregister( m_eventHandler );
+		m_eventHandler = null;
 	}
 
 	@Override
@@ -91,10 +97,16 @@ public class GameFragment extends BaseGameFragment
 		ButterKnife.reset( this );
 	}
 
-	@Subscribe
-	public void onWorldStateChanged( final WorldStateChangedEvent event )
+	private class EventHandler
 	{
-		updateViews();
+		@Subscribe
+		public void onWorldStateChanged( final WorldStateChangedEvent event )
+		{
+			if( event.m_newState == World.State.Setup || event.m_newState == World.State.Pregame )
+			{
+				updateViews();
+			}
+		}
 	}
 
 	private void updateViews()
@@ -155,7 +167,9 @@ public class GameFragment extends BaseGameFragment
 	@OnClick(R.id.ready_button)
 	public void onReadyClicked( final View view )
 	{
-		PlayerReadyRPC playerReady = new PlayerReadyRPC( m_gameController.getLocalParticipantId(), true );
+		PlayerReadyRPC playerReady = new PlayerReadyRPC( m_gameController, true );
 		m_gameController.getNetwork().executeRpc( playerReady );
+
+		m_readyButton.setEnabled( false );
 	}
 }

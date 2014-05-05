@@ -14,13 +14,8 @@ import android.view.WindowManager;
 
 import com.darkrockstudios.apps.mafia.BuildConfig;
 import com.darkrockstudios.apps.mafia.MainActivity;
-import com.darkrockstudios.apps.mafia.R;
 import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
 import com.darkrockstudios.apps.mafia.eventbus.SignInStateChangedEvent;
-import com.darkrockstudios.apps.mafia.fragments.GameFragment;
-import com.darkrockstudios.apps.mafia.fragments.InvitationsFragment;
-import com.darkrockstudios.apps.mafia.fragments.LoadingFragment;
-import com.darkrockstudios.apps.mafia.fragments.SignInFragment;
 import com.darkrockstudios.apps.mafia.game.rpc.GameSetupRPC;
 import com.darkrockstudios.apps.mafia.game.rpc.Network;
 import com.darkrockstudios.apps.mafia.game.rpc.StateChangeRPC;
@@ -50,11 +45,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 {
 	private static final String TAG = GameController.class.getSimpleName();
 
-	private static final String FRAGTAG             = GameController.class.getName() + ".GAMECONTROLLER";
-	public final static  String FRAGTAG_SIGNIN  = MainActivity.class.getPackage() + ".SIGNIN";
-	private final static String FRAGTAG_INVITATIONS = MainActivity.class.getPackage() + ".INVITATIONS";
-	private final static String FRAGTAG_GAME        = MainActivity.class.getPackage() + ".GAME";
-	private final static String FRAGTAG_LOADING = MainActivity.class.getPackage() + ".LOADING";
+	private static final String FRAGTAG = GameController.class.getName() + ".GAMECONTROLLER";
 
 	protected MainActivity m_activity = null;
 
@@ -172,7 +163,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 			setClientType( ClientType.MASTER );
 
 			// go to loading screen while we wait for the proper callback
-			gotoLoadingScreen();
+			Nav.gotoLoadingScreen( m_activity );
 		}
 		if( requestCode == GameController.RC_INVITATION_INBOX )
 		{
@@ -198,14 +189,14 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 			setClientType( ClientType.SLAVE );
 
 			// go to loading screen while we wait for the proper callback
-			gotoLoadingScreen();
+			Nav.gotoLoadingScreen( m_activity );
 		}
 		else if( requestCode == GameController.RC_WAITING_ROOM )
 		{
 			if( responseCode == Activity.RESULT_OK )
 			{
 				// (start game)
-				gotoGameScreen();
+				Nav.gotoPreGameScreen( this );
 			}
 			else if( responseCode == Activity.RESULT_CANCELED )
 			{
@@ -218,7 +209,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 				Games.RealTimeMultiplayer.leave( getApiClient(), this, getRoom().getRoomId() );
 				m_activity.getWindow().clearFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
 
-				gotoInvitationsScreen();
+				Nav.gotoInvitationsScreen( m_activity );
 			}
 			else if( responseCode == GamesActivityResultCodes.RESULT_LEFT_ROOM )
 			{
@@ -226,7 +217,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 				Games.RealTimeMultiplayer.leave( getApiClient(), this, getRoom().getRoomId() );
 				m_activity.getWindow().clearFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
 
-				gotoInvitationsScreen();
+				Nav.gotoInvitationsScreen( m_activity );
 			}
 		}
 	}
@@ -290,51 +281,6 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	public GoogleApiClient getApiClient()
 	{
 		return m_gameHelper.getApiClient();
-	}
-
-	public static void gotoSignInScreen( final Activity activity )
-	{
-		SignInFragment fragment = SignInFragment.newInstance();
-		activity.getFragmentManager().beginTransaction().replace( R.id.container, fragment, FRAGTAG_SIGNIN ).commit();
-	}
-
-	public void gotoInvitationsScreen()
-	{
-		InvitationsFragment fragment = InvitationsFragment.newInstance();
-		m_activity.getFragmentManager().beginTransaction().replace( R.id.container, fragment, FRAGTAG_INVITATIONS ).commit();
-	}
-
-	public void gotoInvitationInbox()
-	{
-		// launch the intent to show the invitation inbox screen
-		Intent intent = Games.Invitations.getInvitationInboxIntent( getApiClient() );
-		startActivityForResult( intent, GameController.RC_INVITATION_INBOX );
-	}
-
-	public void gotoWaitingRoom( final Room room )
-	{
-		Intent i = Games.RealTimeMultiplayer.getWaitingRoomIntent( getApiClient(), room, room.getParticipantIds().size() );
-		startActivityForResult( i, GameController.RC_WAITING_ROOM );
-	}
-
-	public void gotoSelectPlayers()
-	{
-		Intent intent = Games.RealTimeMultiplayer.getSelectOpponentsIntent( getApiClient(),
-		                                                                    GameController.MIN_PLAYERS - 1,
-		                                                                    GameController.MAX_PLAYERS - 1 );
-		startActivityForResult( intent, GameController.RC_SELECT_PLAYERS );
-	}
-
-	public void gotoLoadingScreen()
-	{
-		LoadingFragment fragment = LoadingFragment.newInstance();
-		m_activity.getFragmentManager().beginTransaction().replace( R.id.container, fragment, FRAGTAG_LOADING ).commit();
-	}
-
-	public void gotoGameScreen()
-	{
-		GameFragment fragment = GameFragment.newInstance();
-		m_activity.getFragmentManager().beginTransaction().replace( R.id.container, fragment, FRAGTAG_GAME ).commit();
 	}
 
 	public void completeSetup( final GameSetup gameSetup )
@@ -434,12 +380,39 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 			// All ready, start the game!
 			if( allReady )
 			{
-				StateChangeRPC stateChange = new StateChangeRPC( World.State.Night );
-				m_network.executeRpc( stateChange );
+				final World.State nextState = getNextState();
 
-				m_world.setState( World.State.Night );
+				StateChangeRPC stateChange = new StateChangeRPC( nextState );
+				m_network.executeRpc( stateChange );
 			}
 		}
+	}
+
+	private World.State getNextState()
+	{
+		final World.State nextState;
+
+		switch( m_world.getState() )
+		{
+			case Setup:
+				nextState = World.State.Pregame;
+				break;
+			case Pregame:
+				nextState = World.State.Night;
+				break;
+			case Night:
+				nextState = World.State.Day;
+				break;
+			case Day:
+				nextState = World.State.Night;
+				break;
+			case End:
+			default:
+				nextState = World.State.Invalid;
+				break;
+		}
+
+		return nextState;
 	}
 
 	public String getLocalParticipantId()
@@ -467,7 +440,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		{
 			setRoom( room );
 			m_activity.displayConfirm( "Game Created" );
-			gotoWaitingRoom( room );
+			Nav.gotoWaitingRoom( room, this );
 		}
 	}
 
@@ -481,13 +454,13 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 
 			// show error message, return to main screen.
 			m_activity.displayError( "Failed to join Game" );
-			gotoInvitationsScreen();
+			Nav.gotoInvitationsScreen( m_activity );
 		}
 		else
 		{
 			setRoom( room );
 			m_activity.displayConfirm( "Game Joined" );
-			gotoWaitingRoom( room );
+			Nav.gotoWaitingRoom( room, this );
 		}
 	}
 
@@ -665,7 +638,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 			m_activity.getWindow().addFlags( WindowManager.LayoutParams.FLAG_KEEP_SCREEN_ON );
 
 			// go to loading screen, a future callback will dump us into the waiting room
-			gotoLoadingScreen();
+			Nav.gotoLoadingScreen( m_activity );
 
 			accepted = true;
 		}

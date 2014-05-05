@@ -19,7 +19,7 @@ public class StateChangeRPC extends RemoteProcedureCall
 	@Override
 	public void makeProcedureCall( final GameController gameController )
 	{
-		gameController.getWorld().setState( m_state );
+		gameController.getWorld().changeState( m_state );
 	}
 
 	@Override
