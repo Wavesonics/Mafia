@@ -50,6 +50,16 @@ public class InvitationsFragment extends BaseGameFragment
 	}
 
 	@Override
+	public void onResume()
+	{
+		super.onResume();
+
+		// Try to accept an invitation if, we can get here if the player accepted an invitation while the app was already running
+		// But maybe this doesn't work...
+		m_gameController.acceptInvitation();
+	}
+
+	@Override
 	public void onDestroyView()
 	{
 		super.onDestroyView();

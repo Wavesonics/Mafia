@@ -109,7 +109,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 
 		m_gameHelper.onStart( m_activity );
 
-		m_world = new World();
+		m_world = new World( this );
 	}
 
 	@Override
@@ -247,7 +247,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 		return numPlayers;
 	}
 
-	public ClientType geClientType()
+	public ClientType getClientType()
 	{
 		return m_clientType;
 	}
@@ -377,6 +377,13 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 				}
 			}
 
+			// If everyone is marked as ready, then make sure we are done with the vote if there is one
+			final Vote vote = getWorld().getCurrentVote();
+			if( vote != null && allReady )
+			{
+				allReady = vote.isVoteComplete();
+			}
+
 			// All ready, start the game!
 			if( allReady )
 			{
@@ -480,6 +487,7 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 
 			// show error message, return to main screen.
 			m_activity.displayError( "Failed to connect to game" );
+			Nav.gotoInvitationsScreen( m_activity );
 		}
 		else
 		{
@@ -552,7 +560,9 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 
 		for( final String participantIds : m_room.getParticipantIds() )
 		{
-			if( m_room.getParticipantStatus( participantIds ) == Participant.STATUS_JOINED )
+			Participant participant = m_room.getParticipant( participantIds );
+
+			if( participant.getStatus() == Participant.STATUS_JOINED && participant.isConnectedToRoom() )
 			{
 				++numConnected;
 			}
@@ -631,6 +641,8 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 			RoomConfig.Builder roomConfigBuilder = makeBasicRoomConfigBuilder();
 			roomConfigBuilder.setInvitationIdToAccept( m_gameHelper.getInvitationId() );
 			Games.RealTimeMultiplayer.join( getApiClient(), roomConfigBuilder.build() );
+
+			m_gameHelper.clearInvitation();
 
 			setClientType( ClientType.SLAVE );
 

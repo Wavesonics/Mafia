@@ -54,7 +54,7 @@ public class PreGameFragment extends BaseGameFragment
 		super.onCreate( savedInstanceState );
 		setRetainInstance( true );
 
-		if( m_gameController.geClientType() == ClientType.MASTER )
+		if( m_gameController.getClientType() == ClientType.MASTER )
 		{
 			GameSetupFragment gameSetupFragment = GameSetupFragment.newInstance();
 			gameSetupFragment.show( getFragmentManager(), FRAGTAG_GAME_SETUP );
@@ -117,7 +117,7 @@ public class PreGameFragment extends BaseGameFragment
 
 		if( world.getState() == World.State.Setup )
 		{
-			m_testView1.setText( m_gameController.geClientType().toString() );
+			m_testView1.setText( m_gameController.getClientType().toString() );
 			m_testView2.setText( m_gameController.getWorld().getState().toString() );
 		}
 		else if( world.getState() == World.State.Pregame )

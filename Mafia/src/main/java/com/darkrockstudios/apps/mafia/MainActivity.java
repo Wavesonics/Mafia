@@ -4,11 +4,13 @@ import android.app.Activity;
 import android.app.AlertDialog;
 import android.app.Dialog;
 import android.app.Fragment;
+import android.app.FragmentManager;
 import android.content.DialogInterface;
 import android.content.Intent;
 import android.os.Bundle;
 import android.view.Menu;
 import android.view.MenuItem;
+import android.view.View;
 import android.widget.Toast;
 
 import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
@@ -21,6 +23,7 @@ import java.util.ArrayList;
 import java.util.List;
 
 import butterknife.ButterKnife;
+import butterknife.InjectView;
 import de.keyboardsurfer.android.widget.crouton.Crouton;
 import de.keyboardsurfer.android.widget.crouton.Style;
 
@@ -30,6 +33,9 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 	private GameController m_gameController;
 
 	private List<Dialog> m_dialogs = new ArrayList<>();
+
+	@InjectView(R.id.google_content_container)
+	View m_googleContentView;
 
 	@Override
 	protected void onStart()
@@ -47,7 +53,13 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 		setContentView( R.layout.activity_main );
 		ButterKnife.inject( this );
 
-		Nav.gotoSignInScreen( this );
+		FragmentManager fm = getFragmentManager();
+		if( fm.findFragmentByTag( Nav.FRAGTAG_INVITATIONS ) == null &&
+		    fm.findFragmentByTag( Nav.FRAGTAG_SIGNIN ) == null &&
+		    fm.findFragmentByTag( Nav.FRAGTAG_GAME ) == null )
+		{
+			Nav.gotoSignInScreen( this );
+		}
 	}
 
 	@Override
@@ -56,6 +68,7 @@ public class MainActivity extends Activity implements GameSetupHandler, DialogIn
 		super.onResume();
 
 		m_gameController = GameController.get( getFragmentManager() );
+		//Games.setViewForPopups( m_gameController.getApiClient(), m_googleContentView );
 	}
 
 	@Override

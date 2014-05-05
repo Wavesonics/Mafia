@@ -9,16 +9,15 @@
         android:layout_width="wrap_content"
         android:layout_height="wrap_content"
         android:textAppearance="?android:attr/textAppearanceLarge"
+        android:textStyle="bold"
         android:id="@+id/textView"
         android:layout_gravity="center_horizontal"
         android:singleLine="false"
         android:text="You are a Mobster. Vote on who to kill tonight:"
         android:padding="@dimen/default_padding"/>
 
-    <Button
-        android:layout_width="wrap_content"
-        android:layout_height="wrap_content"
-        android:text="Done"
-        android:id="@+id/NIGHT_mobster_ready_button"
-        android:layout_gravity="center_horizontal"/>
+    <ListView
+        android:id="@+id/NIGHT_mobster_vote_list"
+        android:layout_width="match_parent"
+        android:layout_height="match_parent"/>
 </LinearLayout>

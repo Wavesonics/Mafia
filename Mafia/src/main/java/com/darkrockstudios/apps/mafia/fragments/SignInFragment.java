@@ -1,6 +1,5 @@
 package com.darkrockstudios.apps.mafia.fragments;
 
-import android.app.Fragment;
 import android.os.Bundle;
 import android.view.LayoutInflater;
 import android.view.View;
@@ -10,6 +9,7 @@ import com.darkrockstudios.apps.mafia.R;
 import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
 import com.darkrockstudios.apps.mafia.eventbus.SignInStateChangedEvent;
 import com.darkrockstudios.apps.mafia.game.GameController;
+import com.darkrockstudios.apps.mafia.game.Nav;
 import com.squareup.otto.Subscribe;
 
 import butterknife.ButterKnife;
@@ -21,7 +21,7 @@ import de.keyboardsurfer.android.widget.crouton.Style;
 /**
  * Created by adam on 5/4/14.
  */
-public class SignInFragment extends Fragment
+public class SignInFragment extends BaseGameFragment
 {
 	private EventHandler m_evenHandler;
 
@@ -38,7 +38,7 @@ public class SignInFragment extends Fragment
 	}
 
 	@Override
-	public View onCreateView( LayoutInflater inflater, ViewGroup container, Bundle savedInstanceState )
+	public View onCreateView( final LayoutInflater inflater, final ViewGroup container, final Bundle savedInstanceState )
 	{
 		final View view = inflater.inflate( R.layout.fragment_signin, container, false );
 		ButterKnife.inject( this, view );
@@ -53,6 +53,17 @@ public class SignInFragment extends Fragment
 
 		m_evenHandler = new EventHandler();
 		BusProvider.get().register( m_evenHandler );
+	}
+
+	@Override
+	public void onResume()
+	{
+		super.onResume();
+
+		if( m_gameController.getGameHelper().isSignedIn() )
+		{
+			Nav.gotoInvitationsScreen( getActivity() );
+		}
 	}
 
 	@Override
