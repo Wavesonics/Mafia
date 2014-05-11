@@ -77,8 +77,11 @@ public class World
 		final Room room = m_gameController.getRoom();
 		for( final PlayerSpecification playerSpec : m_gameSetup.getAllPlayers() )
 		{
-			m_currentVote.addNominee( room.getParticipant( playerSpec.m_participantId ) );
-			m_currentVote.addVoter( room.getParticipant( playerSpec.m_participantId ) );
+			if( playerSpec.m_alive )
+			{
+				m_currentVote.addNominee( room.getParticipant( playerSpec.m_participantId ) );
+				m_currentVote.addVoter( room.getParticipant( playerSpec.m_participantId ) );
+			}
 		}
 	}
 
