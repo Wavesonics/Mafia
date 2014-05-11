@@ -85,6 +85,39 @@ public class World
 		}
 	}
 
+	public int numLiveCitizens()
+	{
+		int numAlive = 0;
+		for( PlayerSpecification playerSpec : m_gameSetup.getAllPlayers() )
+		{
+			if( playerSpec.m_role != PlayerRole.Mobster && playerSpec.m_alive )
+			{
+				numAlive++;
+			}
+		}
+
+		return numAlive;
+	}
+
+	public int numLiveMobsters()
+	{
+		int numAlive = 0;
+		for( PlayerSpecification playerSpec : m_gameSetup.getAllPlayers() )
+		{
+			if( playerSpec.m_role == PlayerRole.Mobster && playerSpec.m_alive )
+			{
+				numAlive++;
+			}
+		}
+
+		return numAlive;
+	}
+
+	public boolean isGameOver()
+	{
+		return numLiveCitizens() == 0 || numLiveMobsters() == 0;
+	}
+
 	private void setupMobsterVote()
 	{
 		m_currentVote = new Vote();
@@ -92,13 +125,16 @@ public class World
 		final Room room = m_gameController.getRoom();
 		for( final PlayerSpecification playerSpec : m_gameSetup.getAllPlayers() )
 		{
-			if( playerSpec.m_role != PlayerRole.Mobster )
+			if( playerSpec.m_alive )
 			{
-				m_currentVote.addNominee( room.getParticipant( playerSpec.m_participantId ) );
-			}
-			else
-			{
-				m_currentVote.addVoter( room.getParticipant( playerSpec.m_participantId ) );
+				if( playerSpec.m_role != PlayerRole.Mobster )
+				{
+					m_currentVote.addNominee( room.getParticipant( playerSpec.m_participantId ) );
+				}
+				else
+				{
+					m_currentVote.addVoter( room.getParticipant( playerSpec.m_participantId ) );
+				}
 			}
 		}
 	}

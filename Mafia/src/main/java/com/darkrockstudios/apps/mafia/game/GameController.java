@@ -399,24 +399,31 @@ public class GameController extends Fragment implements OnInvitationReceivedList
 	{
 		final World.State nextState;
 
-		switch( m_world.getState() )
+		if( !m_world.isGameOver() )
 		{
-			case Setup:
-				nextState = World.State.Pregame;
-				break;
-			case Pregame:
-				nextState = World.State.Night;
-				break;
-			case Night:
-				nextState = World.State.Day;
-				break;
-			case Day:
-				nextState = World.State.Night;
-				break;
-			case End:
-			default:
-				nextState = World.State.Invalid;
-				break;
+			switch( m_world.getState() )
+			{
+				case Setup:
+					nextState = World.State.Pregame;
+					break;
+				case Pregame:
+					nextState = World.State.Night;
+					break;
+				case Night:
+					nextState = World.State.Day;
+					break;
+				case Day:
+					nextState = World.State.Night;
+					break;
+				case End:
+				default:
+					nextState = World.State.Invalid;
+					break;
+			}
+		}
+		else
+		{
+			nextState = World.State.End;
 		}
 
 		return nextState;

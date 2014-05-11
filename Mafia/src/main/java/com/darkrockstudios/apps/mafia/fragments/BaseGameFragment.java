@@ -7,6 +7,7 @@ import com.darkrockstudios.apps.mafia.eventbus.BusProvider;
 import com.darkrockstudios.apps.mafia.eventbus.WorldStateChangedEvent;
 import com.darkrockstudios.apps.mafia.game.GameController;
 import com.darkrockstudios.apps.mafia.game.Nav;
+import com.darkrockstudios.apps.mafia.game.World;
 import com.squareup.otto.Subscribe;
 
 /**
@@ -60,24 +61,31 @@ public class BaseGameFragment extends DialogFragment
 		@Subscribe
 		public void onWorldStateChanged( final WorldStateChangedEvent event )
 		{
-			switch( event.m_newState )
+			if( m_gameController.getLocalPlayerSpec().m_alive || event.m_newState == World.State.End )
 			{
-				case Setup:
-					// Do nothing
-					break;
-				case Pregame:
-					break;
-				case Night:
-					Nav.gotoNightScreen( m_gameController );
-					break;
-				case Day:
-					Nav.gotoDayScreen( m_gameController, event.m_voteWinnerId );
-					break;
-				case End:
-					Nav.gotoEndScreen( m_gameController );
-					break;
-				case Invalid:
-					break;
+				switch( event.m_newState )
+				{
+					case Setup:
+						// Do nothing
+						break;
+					case Pregame:
+						break;
+					case Night:
+						Nav.gotoNightScreen( m_gameController );
+						break;
+					case Day:
+						Nav.gotoDayScreen( m_gameController, event.m_voteWinnerId );
+						break;
+					case End:
+						Nav.gotoEndScreen( m_gameController );
+						break;
+					case Invalid:
+						break;
+				}
+			}
+			else
+			{
+				Nav.gotoDeadScreen( m_gameController );
 			}
 		}
 	}
